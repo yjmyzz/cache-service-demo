@@ -1,0 +1,118 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'application'
+
+group = 'cn.9now'
+version = '1.0'
+def artifactId = "cache-service-provider"
+
+targetCompatibility = 1.8
+sourceCompatibility = 1.8
+
+[compileJava, compileTestJava].each() {
+    it.options.compilerArgs += ["-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:-options"]
+    it.options.encoding = "UTF-8"
+}
+
+
+repositories {
+    mavenLocal()
+    maven {
+        url 'http://dev:8081/nexus/content/groups/public/'
+    }
+    maven {
+        url 'http://maven.oschina.net/content/groups/public/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.projectlombok:lombok:1.16.4'
+    compile project(':cache-service-api')
+    compile 'javax.validation:validation-api:1.1.0.Final'
+    compile 'org.hibernate:hibernate-validator:5.2.2.Final'
+    compile 'javax.ws.rs:javax.ws.rs-api:2.0'
+    compile 'javax.annotation:javax.annotation-api:1.2'
+
+    compile 'org.jboss.resteasy:resteasy-client:3.0.9.Final'
+    compile 'org.jboss.resteasy:resteasy-jaxrs:3.0.9.Final'
+    compile 'org.jboss.resteasy:resteasy-netty:3.0.14.Final'
+
+    compile 'com.esotericsoftware.kryo:kryo:2.24.0'
+    compile 'de.javakaffee:kryo-serializers:0.37'
+
+    compile 'org.slf4j:slf4j-api:1.7.15'
+    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.5'
+    compile 'org.apache.logging.log4j:log4j-core:2.5'
+
+    compile('org.springframework:spring-core:4.2.4.RELEASE')
+    compile('org.springframework:spring-context:4.2.4.RELEASE') {
+        exclude(module: 'commons-logging')
+    }
+    compile('org.springframework:spring-context-support:4.2.4.RELEASE')
+    compile('org.springframework:spring-beans:4.2.4.RELEASE')
+
+    compile 'org.jboss.netty:netty:3.2.10.Final'
+    compile 'io.netty:netty-all:4.0.34.Final'
+    compile('org.apache.zookeeper:zookeeper:3.4.6') {
+        exclude(module: 'log4j')
+        exclude(module: 'slf4j-log4j12')
+    }
+
+    compile 'javax.el:javax.el-api:3.0.0'
+    compile 'org.glassfish.web:javax.el:2.2.6'
+
+    compile 'org.jboss.resteasy:resteasy-jackson-provider:3.0.14.Final'
+    compile 'org.jboss.resteasy:resteasy-jaxb-provider:3.0.16.Final'
+
+    compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.12'
+    compile 'javax.xml.bind:jaxb-api:2.2.7'
+
+    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.11'
+    compile 'org.apache.tomcat.embed:tomcat-embed-logging-juli:8.0.11'
+
+    compile "redis.clients:jedis:2.8.0"
+
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+task deleteBat(type: Delete, dependsOn: [clean, installDist]) {
+    delete "$buildDir/install/$artifactId/bin/demo-service-provider.bat"
+}
+
+task copyConfig(type: Copy, dependsOn: [deleteBat]) {
+
+    sourceSets.main.resources.srcDirs.each {
+        from it
+        into "$buildDir/install/$artifactId/bin/resources"
+    }
+
+}
+
+task pack(type: Copy, dependsOn: [copyConfig]) {
+    //from "$projectDir/src/bash/run.sh"
+    //into "$buildDir/install/$artifactId/bin"
+}
+
+mainClassName = 'demo.service.CacheServiceProvider'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "http://dev:8081/nexus/content/repositories/thirdparty") {
+                authentication(userName: "admin", password: "admin123")
+            }
+            pom.version = "$project.version"
+            pom.artifactId = "$artifactId"
+            pom.groupId = "$project.group"
+        }
+    }
+}

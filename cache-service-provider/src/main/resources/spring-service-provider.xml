@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+	http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="cache-service-provider" organization="github" owner="9now" version="1.0"/>
+
+    <dubbo:registry protocol="zookeeper"
+                    address="zookeeper://127.0.0.1:2181?backup=127.0.0.1:2182,127.0.0.1:2183"/>
+
+    <!--<dubbo:monitor protocol="registry"/>-->
+
+    <dubbo:protocol name="dubbo" port="6011" serialization="kryo"
+                    optimizer="nowait.service.cache.common.SerializationOptimizerImpl" server="netty" iothreads="10"
+                    threads="500"/>
+
+    <dubbo:protocol name="thrift2" port="33201"/>
+
+    <dubbo:protocol name="rest" port="6051" threads="500" server="tomcat" accepts="500"
+                    contextpath="services" extension="nowait.service.cache.extension.ValidationExceptionMapper"/>
+
+    <dubbo:service interface="nowait.service.cache.api.CacheRestService" ref="cacheRestService" protocol="rest"
+                   validation="true" timeout="10000" connections="100" filter="serviceFilter"/>
+
+    <dubbo:service interface="nowait.service.cache.api.CacheService$Iface" protocol="thrift2"
+                   ref="cacheService" timeout="10000" filter="serviceFilter"/>
+
+
+</beans>

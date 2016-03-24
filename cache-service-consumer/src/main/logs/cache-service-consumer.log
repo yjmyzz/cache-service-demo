@@ -1,0 +1,3 @@
+22:34:30,132 <nowait.service.cache.consumer.CacheServiceConsumer>  WARN [main]: CacheService RPC testing => 
+22:35:26,832 <nowait.service.cache.consumer.CacheServiceConsumer>  WARN [main]: 100000次redis write,共耗时56694毫秒,平均1763.855103/秒
+22:36:00,227 <nowait.service.cache.consumer.CacheServiceConsumer>  WARN [main]: 100000次redis read,共耗时33394毫秒,平均2994.549805/秒

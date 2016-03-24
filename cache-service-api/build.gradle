@@ -1,0 +1,115 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'cn.9now'
+version = '1.0'
+def artifactId = "cache-service-api"
+
+targetCompatibility = 1.8
+sourceCompatibility = 1.8
+
+[compileJava, compileTestJava].each() {
+    it.options.compilerArgs += ["-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:-options"]
+    it.options.encoding = "UTF-8"
+}
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "gradle.plugin.org.jruyi.gradle:thrift-gradle-plugin:0.3.1"
+    }
+}
+
+apply plugin: "org.jruyi.thrift"
+
+repositories {
+    mavenLocal()
+    maven {
+        url 'http://dev:8081/nexus/content/groups/public/'
+    }
+    maven {
+        url 'http://maven.oschina.net/content/groups/public/'
+    }
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.projectlombok:lombok:1.16.4'
+    compile 'javax.validation:validation-api:1.1.0.Final'
+    compile 'org.hibernate:hibernate-validator:5.2.2.Final'
+    compile 'javax.ws.rs:javax.ws.rs-api:2.0'
+    compile 'javax.annotation:javax.annotation-api:1.2'
+    compile('com.alibaba:dubbo:2.8.4a') {
+        exclude(module: 'log4j')
+        exclude(module: 'logback-classic')
+        exclude(module: 'slf4j-log4j12')
+    }
+    compile 'org.jboss.resteasy:resteasy-client:3.0.9.Final'
+    compile 'org.jboss.resteasy:resteasy-jaxrs:3.0.9.Final'
+    compile 'org.jboss.resteasy:resteasy-netty:3.0.14.Final'
+    compile 'com.esotericsoftware.kryo:kryo:2.24.0'
+    compile 'de.javakaffee:kryo-serializers:0.37'
+    compile 'org.apache.thrift:libthrift:0.9.3'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+compileThrift {
+    thriftExecutable "thrift"
+    sourceDir "src/main/thrift"
+    outputDir "src/main/thrift-java"
+    nowarn true
+    strict true
+    verbose true
+    recurse true
+    debug false
+    allowNegKeys true
+    allow64bitsConsts true
+    createGenFolder false
+    generator 'java', 'private-members'
+}
+
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', 'src/main/thrift-java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java', 'src/test/thrift']
+        }
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "http://dev:8081/nexus/content/repositories/thirdparty") {
+                authentication(userName: "admin", password: "admin123")
+            }
+            pom.version = "$project.version"
+            pom.artifactId = "$artifactId"
+            pom.groupId = "$project.group"
+        }
+    }
+}

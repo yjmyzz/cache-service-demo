@@ -1,0 +1,87 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'application'
+
+group = 'cn.9now'
+version = '1.0'
+def artifactId = "cache-service-consumer"
+
+targetCompatibility = 1.8
+sourceCompatibility = 1.8
+
+[compileJava, compileTestJava].each() {
+    it.options.compilerArgs += ["-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:-options"]
+    it.options.encoding = "UTF-8"
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url 'http://dev:8081/nexus/content/groups/public/'
+    }
+    maven {
+        url 'http://maven.oschina.net/content/groups/public/'
+    }
+    mavenCentral()
+}
+
+
+dependencies {    
+    compile('org.springframework:spring-context:4.2.4.RELEASE') {
+        exclude(module: 'commons-logging')
+    }
+
+    compile ('org.apache.zookeeper:zookeeper:3.4.6'){
+        exclude(module: 'log4j')
+        exclude(module: 'slf4j-log4j12')
+    }
+
+    compile 'javax.el:javax.el-api:3.0.0'
+    compile 'org.glassfish.web:javax.el:2.2.6'
+
+    compile 'org.jboss.resteasy:resteasy-client:3.0.9.Final'
+    compile 'org.jboss.resteasy:resteasy-jaxrs:3.0.9.Final'
+    compile 'org.jboss.resteasy:resteasy-netty:3.0.14.Final'
+
+    compile 'org.jboss.resteasy:resteasy-jackson-provider:3.0.14.Final'
+    compile 'org.jboss.resteasy:resteasy-jaxb-provider:3.0.16.Final'
+
+    compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.12'
+    compile 'javax.xml.bind:jaxb-api:2.2.7'
+
+    compile project(':cache-service-api')
+
+}
+
+task deleteBat(type: Delete, dependsOn: [clean, installDist]) {
+    delete "$buildDir/install/$artifactId/bin/cache-service-consumer.bat"
+}
+
+task copyConfig(type: Copy, dependsOn: [deleteBat]) {
+
+    sourceSets.main.resources.srcDirs.each {
+        from it
+        into "$buildDir/install/$artifactId/bin/resources"
+    }
+
+}
+
+task pack(type: Copy, dependsOn: [copyConfig]) {
+    //from "$projectDir/src/bash/run.sh"
+    //into "$buildDir/install/$artifactId/bin"
+}
+
+mainClassName="demo.service.CacheServiceConsumer"
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "http://dev:8081/nexus/content/repositories/thirdparty") {
+                authentication(userName: "admin", password: "admin123")
+            }
+            pom.version = "$project.version"
+            pom.artifactId = "$artifactId"
+            pom.groupId = "$project.group"
+        }
+    }
+}

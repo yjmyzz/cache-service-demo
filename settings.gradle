@@ -1,0 +1,5 @@
+rootProject.name = "cache-service"
+
+include "cache-service-api"
+include "cache-service-provider"
+include "cache-service-consumer"
